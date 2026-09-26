@@ -3,7 +3,11 @@
 A small lead management application: capture leads, search them, and move them
 through a sales pipeline.
 
-**Live deployment:** _(fill in after deploying — see [Deployment](#deployment))_
+**Live deployment:** <https://lead-tracker-awes.onrender.com/>
+
+> Hosted on Render's free tier, which spins the instance down after ~15 minutes
+> of inactivity. The first request after an idle period takes 30–60 seconds
+> while it wakes; everything after that is immediate.
 
 ---
 
