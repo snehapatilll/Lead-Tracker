@@ -2,14 +2,25 @@ import { Pool } from 'pg';
 import { LEAD_STATUSES } from './domain';
 
 /**
- * Hosted Postgres (Neon, Render) terminates TLS with a certificate chain that
- * is not always present in the container's trust store, so verification is
- * relaxed for remote connections. Local connections use plain TCP.
- * See the "Trade-offs" section of the README.
+ * TLS policy for the database connection.
+ *
+ * Remote connections verify the server's certificate chain in full. Encrypting
+ * without verifying still leaves a man-in-the-middle window, so this is the
+ * default - and it was confirmed working against the deployment's actual
+ * provider rather than assumed.
+ *
+ * Some providers terminate TLS with a self-signed or private chain absent from
+ * the container's trust store. `DATABASE_SSL_NO_VERIFY=true` is the escape
+ * hatch for those. It is deliberately opt-in, so weakening verification is
+ * always a visible decision rather than a silent default.
+ *
+ * Local connections use plain TCP.
  */
 function sslConfigFor(connectionString: string): false | { rejectUnauthorized: boolean } {
   const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(connectionString);
-  return isLocal ? false : { rejectUnauthorized: false };
+  if (isLocal) return false;
+
+  return { rejectUnauthorized: process.env.DATABASE_SSL_NO_VERIFY !== 'true' };
 }
 
 export function createPool(connectionString: string): Pool {

@@ -207,6 +207,11 @@ The schema is created automatically on first boot — no migration step.
 | `NODE_ENV` | no | `development` | `production` enables static serving |
 | `USE_IN_MEMORY_DB` | no | `false` | Run without Postgres (non-production only) |
 | `SERVE_CLIENT` | no | follows `NODE_ENV` | Force static serving on or off |
+| `DATABASE_SSL_NO_VERIFY` | no | `false` | Escape hatch for providers whose TLS chain does not validate |
+
+Remote database connections verify the full TLS certificate chain by default.
+`DATABASE_SSL_NO_VERIFY=true` relaxes that for providers using a self-signed
+or private chain — opt-in, so weakening verification is always deliberate.
 
 ¹ Not required when `USE_IN_MEMORY_DB=true`.
 
@@ -225,9 +230,19 @@ status, oversized `pageSize`), duplicate-email conflicts, search across all
 three fields, status filtering, pagination totals, sorting, and the
 400-vs-404 distinction for lead ids.
 
-**Not covered:** the Postgres repository itself. Its SQL is exercised manually
-and in deployment, but the in-memory double means the query layer has no
-automated test. See [Future improvements](#future-improvements).
+**Not covered by automated tests:** the Postgres repository itself. Because
+the suite runs against the in-memory double, the SQL layer has no automated
+test.
+
+It has been **manually verified end to end against the live Neon database**:
+schema bootstrap, seeding, `COUNT(*) OVER()` pagination totals,
+case-insensitive `ILIKE` search across all three fields, status filtering,
+whitelisted sort columns, the create/update round trip, and the unique-email
+violation (Postgres error `23505`) mapping to a 409. Full TLS chain
+verification was confirmed working rather than assumed.
+
+Automating this against a real database in CI is the top item in
+[Future improvements](#future-improvements).
 
 ---
 
@@ -301,13 +316,6 @@ duplication is cheaper than the wiring; past two or three consumers that flips.
 Simple, correct, and index-ineligible — Postgres scans the table. Fine for
 thousands of rows, not for millions. The fix is a `pg_trgm` GIN index or a
 `tsvector` column, which is a five-line migration once it is actually needed.
-
-**`rejectUnauthorized: false` on remote database TLS.**
-Connections are still encrypted, but the certificate chain is not verified,
-which leaves a theoretical MITM window. Hosted Postgres providers use chains
-that are not always in a container's trust store, and debugging that against a
-deadline was not a good trade. The correct fix is pinning the provider's CA
-certificate.
 
 **No authentication.**
 The brief did not ask for it, so anyone with the URL can read and write leads.

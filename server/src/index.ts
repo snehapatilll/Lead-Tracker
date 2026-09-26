@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './env';
 import type { Pool } from 'pg';
 import { createApp } from './app';
 import { createPool, migrate } from './db';

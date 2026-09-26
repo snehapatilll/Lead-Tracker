@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './env';
 import { createPool, migrate } from './db';
 import type { LeadStatus } from './domain';
 
