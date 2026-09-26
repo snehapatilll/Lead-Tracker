@@ -8,14 +8,34 @@ services:
     name: lead-tracker
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+
+    # --include=dev is required on Render, not cosmetic.
+    #
+    # The build needs vite, typescript and @types/* - all devDependencies.
+    # Render's build environment omits devDependencies by default (NODE_ENV is
+    # production here, and its npm honours that), so a plain `npm install`
+    # installs react but not @types/react, and the build dies with
+    # "Could not find a declaration file for module 'react'".
+    #
+    # Note that npm 10 on a local machine installs devDependencies regardless,
+    # so this failure does not reproduce locally - it only appears on Render.
+    # NPM_CONFIG_PRODUCTION=false below covers the same ground from the other
+    # direction. Nothing in dist/ needs these packages at runtime.
+    buildCommand: npm install --include=dev --no-audit --no-fund && npm run build
+
     startCommand: npm start
     healthCheckPath: /api/health
+
     envVars:
       - key: NODE_VERSION
         value: 22.20.0
       - key: NODE_ENV
         value: production
+      # Stops npm from omitting devDependencies during the build. Paired with
+      # --include=dev above; either alone should suffice, together they are
+      # robust to Render changing its default.
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       # Set in the Render dashboard - paste the Neon connection string here.
       # sync:false keeps the secret out of source control.
       - key: DATABASE_URL
