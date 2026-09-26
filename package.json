@@ -16,6 +16,7 @@
     "dev:client": "npm run dev --workspace client",
     "build": "npm run build --workspace client && npm run build --workspace server",
     "start": "node server/dist/index.js",
+    "seed": "npm run seed --workspace server",
     "test": "npm run test --workspace server",
     "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace client"
   },
