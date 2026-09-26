@@ -1,0 +1,22 @@
+# Render blueprint - https://render.com/docs/blueprint-spec
+#
+# One web service builds both workspaces and serves the API plus the compiled
+# React bundle from a single process, so the whole app lives behind one URL
+# and there is no cross-origin configuration to maintain.
+services:
+  - type: web
+    name: lead-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.20.0
+      - key: NODE_ENV
+        value: production
+      # Set in the Render dashboard - paste the Neon connection string here.
+      # sync:false keeps the secret out of source control.
+      - key: DATABASE_URL
+        sync: false
