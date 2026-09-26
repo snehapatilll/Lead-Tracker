@@ -94,8 +94,10 @@ export function LeadTable({
             {leads.map((lead) => (
               <tr key={lead.id}>
                 <td className="cell-name">{lead.name}</td>
-                <td>
-                  <a href={`mailto:${lead.email}`} className="cell-link">
+                <td className="cell-email">
+                  {/* title so the full address is still reachable if the
+                      column truncates on a narrow window */}
+                  <a href={`mailto:${lead.email}`} className="cell-link" title={lead.email}>
                     {lead.email}
                   </a>
                 </td>
